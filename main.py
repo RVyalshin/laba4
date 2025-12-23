@@ -931,7 +931,6 @@ async def handle_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_investment(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик ввода ежемесячного пополнения"""
     try:
         monthly = float(update.message.text.replace(',', '.'))
         if monthly < 0:
@@ -950,14 +949,12 @@ async def handle_investment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_investment_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик ввода доходности для инвестиций"""
     try:
         rate = float(update.message.text.replace(',', '.'))
         if rate < -100:
             await update.message.reply_text("Доходность не может быть меньше -100%")
             return RATE
 
-        # Получаем все данные
         data = context.user_data
         amount = data.get('amount')
         monthly = data.get('monthly')
@@ -971,7 +968,6 @@ async def handle_investment_rate(update: Update, context: ContextTypes.DEFAULT_T
             await show_main_menu(update, context)
             return ConversationHandler.END
 
-        # Сохраняем в историю
         user_id = update.effective_user.id
         if user_id in calculation_history:
             record = CalculationRecord(
@@ -981,7 +977,6 @@ async def handle_investment_rate(update: Update, context: ContextTypes.DEFAULT_T
             )
             calculation_history[user_id].append(record)
 
-        # Формируем ответ
         response = f"""
         ✅ <b>Результаты расчета инвестиций:</b>
 
@@ -1019,7 +1014,6 @@ async def handle_investment_rate(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Показать главное меню"""
     if update.message:
         await update.message.reply_text(
             "Выберите следующее действие:",
@@ -1032,13 +1026,10 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ========== АНАЛИЗ ДАННЫХ ==========
 async def perform_data_analysis(message, context):
-    """Выполнение анализа данных"""
     try:
         analyzer = DataAnalyzer()
 
-        # Шаг 1: Генерация данных
         df = analyzer.generate_sample_data()
         data_info = f"""
         📈 <b>Сгенерированные финансовые данные:</b>
@@ -1059,7 +1050,6 @@ async def perform_data_analysis(message, context):
             parse_mode=ParseMode.HTML
         )
 
-        # Шаг 2: Визуализации
         await message.reply_text("🖼️ <b>Создаю визуализации...</b>", parse_mode=ParseMode.HTML)
         images = analyzer.create_visualizations(df)
 
@@ -1077,7 +1067,6 @@ async def perform_data_analysis(message, context):
                 parse_mode=ParseMode.HTML
             )
 
-        # Шаг 3: Проверка гипотезы
         await message.reply_text("🧪 <b>Проверяю статистическую гипотезу...</b>", parse_mode=ParseMode.HTML)
         hypothesis_result = analyzer.test_statistical_hypothesis(df)
 
@@ -1107,7 +1096,6 @@ async def perform_data_analysis(message, context):
                 parse_mode=ParseMode.HTML
             )
 
-            # Отправляем Q-Q plot
             if hypothesis_result.get('qq_plot'):
                 await message.reply_photo(
                     photo=InputFile(hypothesis_result['qq_plot'], filename="qq_plot.png"),
@@ -1120,7 +1108,6 @@ async def perform_data_analysis(message, context):
                 parse_mode=ParseMode.HTML
             )
 
-        # Заключение
         await message.reply_text(
             "✅ <b>Анализ завершен!</b>\n\nВыберите следующее действие:",
             parse_mode=ParseMode.HTML,
@@ -1138,9 +1125,8 @@ async def perform_data_analysis(message, context):
         )
 
 
-# ========== ОБРАБОТКА БЫСТРОГО ВВОДА ==========
 async def handle_quick_calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик быстрого ввода для кредита/вклада"""
+
     try:
         text = update.message.text
         parts = text.split()
@@ -1227,9 +1213,7 @@ async def handle_quick_calc(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Ошибка быстрого расчета: {str(e)}")
 
 
-# ========== ОБРАБОТКА ВСЕХ СООБЩЕНИЙ ==========
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик всех остальных сообщений"""
     if update.message.text:
         await update.message.reply_text(
             "Я не понимаю эту команду. Используйте меню или команды:\n"
@@ -1239,9 +1223,7 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
         )
 
 
-# ========== ОБРАБОТКА ОШИБОК ==========
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Глобальный обработчик ошибок"""
     logging.error(f"Произошла ошибка: {context.error}", exc_info=True)
 
     if update and update.effective_message:
@@ -1250,9 +1232,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ========== ОСНОВНАЯ ФУНКЦИЯ ==========
 def main():
-    """Основная функция запуска бота"""
     print("=" * 50)
     print("Финансовый калькулятор бот")
     print("Версия: python-telegram-bot")
@@ -1269,14 +1249,10 @@ def main():
     print("⚡ Используйте /start для начала работы")
     print("=" * 50)
 
-    # Создаем приложение
     application = Application.builder().token(BOT_TOKEN).build()
-
-    # Добавляем обработчики команд
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
 
-    # Создаем ConversationHandler для расчетов
     conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(button_handler)],
         states={
@@ -1289,7 +1265,6 @@ def main():
         allow_reentry=True
     )
 
-    # Добавляем специальный обработчик для инвестиций
     investment_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(button_handler, pattern="^investment_calc$")],
         states={
@@ -1302,33 +1277,26 @@ def main():
         allow_reentry=True
     )
 
-    # Добавляем обработчики
     application.add_handler(conv_handler)
     application.add_handler(investment_handler)
     application.add_handler(CallbackQueryHandler(button_handler))
 
-    # Обработчик быстрого ввода (3 или 4 числа через пробел)
     application.add_handler(MessageHandler(
         filters.Regex(r'^\d+(?:[.,]\d+)?\s+\d+(?:[.,]\d+)?\s+\d+(?:[.,]\d+)?(?:\s+\d+(?:[.,]\d+)?)?$'),
         handle_quick_calc
     ))
 
-    # Обработчик всех остальных сообщений
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_all_messages))
 
-    # Обработчик ошибок
     application.add_error_handler(error_handler)
 
-    # Запуск бота
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    # Настройка логирования
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO
     )
 
-    # Запуск бота
     main()

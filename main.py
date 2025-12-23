@@ -36,24 +36,17 @@ from telegram.ext import (
 from telegram.constants import ParseMode
 from scipy import stats
 
-# Загрузка переменных окружения
 load_dotenv()
 
-# ========== КОНФИГУРАЦИЯ ==========
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 if not BOT_TOKEN:
-    # Для тестирования - можно задать вручную
     BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 
-# Глобальные переменные
-user_settings = {}  # user_id -> UserSettings
-calculation_history = {}  # user_id -> List[CalculationRecord]
+user_settings = {}
+calculation_history = {}
 
-# Состояния для ConversationHandler
 AMOUNT, YEARS, RATE, INVESTMENT, CAPITALIZATION, LOAN_TYPE = range(6)
 
-
-# ========== МОДЕЛИ ДАННЫХ ==========
 class CalculationType(Enum):
     LOAN = "loan"
     DEPOSIT = "deposit"
@@ -63,7 +56,6 @@ class CalculationType(Enum):
 
 @dataclass
 class UserSettings:
-    """Настройки пользователя"""
     user_id: int
     default_currency: str = "RUB"
     notifications: bool = True
@@ -77,7 +69,6 @@ class UserSettings:
 
 @dataclass
 class CalculationRecord:
-    """Запись расчета"""
     calc_type: CalculationType
     params: Dict[str, Any]
     result: Dict[str, Any]
@@ -88,9 +79,7 @@ class CalculationRecord:
             self.timestamp = datetime.now().isoformat()
 
 
-# ========== КЛАСС ДЛЯ РАСЧЕТОВ ==========
 class FinancialCalculator:
-    """Класс для финансовых расчетов"""
 
     @staticmethod
     def calculate_loan(
@@ -99,9 +88,6 @@ class FinancialCalculator:
             annual_rate: float,
             loan_type: str = "annuity"
     ) -> Dict[str, Any]:
-        """
-        Расчет кредитных платежей
-        """
         try:
             if amount <= 0 or years <= 0 or annual_rate <= 0:
                 raise ValueError("Все значения должны быть положительными")
@@ -197,9 +183,6 @@ class FinancialCalculator:
             annual_rate: float,
             capitalization: str = "monthly"
     ) -> Dict[str, Any]:
-        """
-        Расчет вклада с капитализацией
-        """
         try:
             if amount <= 0 or years <= 0 or annual_rate <= 0:
                 raise ValueError("Все значения должны быть положительными")
@@ -300,14 +283,10 @@ class FinancialCalculator:
                 "error": str(e)
             }
 
-
-# ========== КЛАСС ДЛЯ АНАЛИЗА ДАННЫХ ==========
 class DataAnalyzer:
-    """Класс для анализа финансовых данных"""
 
     @staticmethod
     def generate_sample_data() -> pd.DataFrame:
-        """Генерация тестовых финансовых данных"""
         np.random.seed(42)
         dates = pd.date_range('2020-01-01', '2023-12-31', freq='M')
         n = len(dates)
@@ -331,9 +310,6 @@ class DataAnalyzer:
 
     @staticmethod
     def create_visualizations(df: pd.DataFrame) -> List[BytesIO]:
-        """
-        Создание визуализаций для финансовых данных
-        """
         images = []
 
         try:

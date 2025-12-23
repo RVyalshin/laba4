@@ -313,7 +313,6 @@ class DataAnalyzer:
         images = []
 
         try:
-            # 1. График прибыли по времени
             plt.figure(figsize=(10, 6))
             plt.plot(df['date'], df['profit'], 'b-', linewidth=2)
             plt.title('Динамика прибыли по месяцам', fontsize=14)
@@ -327,8 +326,6 @@ class DataAnalyzer:
             img_buf.seek(0)
             images.append(img_buf)
             plt.close()
-
-            # 2. Распределение процентных ставок
             plt.figure(figsize=(10, 6))
             plt.hist(df['interest_rate'], bins=15, edgecolor='black', alpha=0.7)
             plt.title('Распределение процентных ставок', fontsize=14)
@@ -343,7 +340,6 @@ class DataAnalyzer:
             images.append(img_buf)
             plt.close()
 
-            # 3. Корреляционная матрица
             plt.figure(figsize=(10, 6))
             numeric_cols = ['revenue', 'expenses', 'profit', 'investments', 'interest_rate']
             corr_matrix = df[numeric_cols].corr()
@@ -367,7 +363,6 @@ class DataAnalyzer:
             images.append(img_buf)
             plt.close()
 
-            # 4. Box plot прибыли по годам
             plt.figure(figsize=(10, 6))
             df.boxplot(column='profit', by='year', grid=True)
             plt.title('Распределение прибыли по годам', fontsize=14)
@@ -389,9 +384,7 @@ class DataAnalyzer:
 
     @staticmethod
     def test_statistical_hypothesis(df: pd.DataFrame) -> Dict[str, Any]:
-        """
-        Проверка статистической гипотезы
-        """
+
         try:
             profit_data = df['profit'].dropna()
 
@@ -444,14 +437,10 @@ class DataAnalyzer:
                 "error": str(e)
             }
 
-
-# ========== КЛАВИАТУРЫ ==========
 class Keyboards:
-    """Класс для создания клавиатур"""
 
     @staticmethod
     def get_main_menu() -> InlineKeyboardMarkup:
-        """Главное меню бота"""
         keyboard = [
             [InlineKeyboardButton("💰 Кредитный калькулятор", callback_data="calc_loan")],
             [InlineKeyboardButton("💳 Калькулятор вклада", callback_data="calc_deposit")],
@@ -465,7 +454,6 @@ class Keyboards:
 
     @staticmethod
     def get_calc_types(calc_type: str) -> InlineKeyboardMarkup:
-        """Клавиатура для выбора типа расчета"""
         keyboard = []
 
         if calc_type == "loan":
@@ -492,7 +480,6 @@ class Keyboards:
 
     @staticmethod
     def get_settings_menu() -> InlineKeyboardMarkup:
-        """Меню настроек"""
         keyboard = [
             [InlineKeyboardButton("🌍 Валюта (RUB)", callback_data="set_currency")],
             [InlineKeyboardButton("🔔 Уведомления (Вкл)", callback_data="toggle_notifications")],
@@ -502,7 +489,6 @@ class Keyboards:
 
     @staticmethod
     def get_currency_menu() -> InlineKeyboardMarkup:
-        """Выбор валюты"""
         keyboard = [
             [
                 InlineKeyboardButton("RUB", callback_data="currency_RUB"),
@@ -519,14 +505,11 @@ class Keyboards:
 
     @staticmethod
     def get_back_button() -> InlineKeyboardMarkup:
-        """Кнопка 'Назад'"""
         keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data="back_to_menu")]]
         return InlineKeyboardMarkup(keyboard)
 
 
-# ========== ОБРАБОТЧИКИ КОМАНД ==========
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /start"""
     user_id = update.effective_user.id
 
     if user_id not in user_settings:
@@ -553,7 +536,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик команды /help"""
     help_text = """
     <b>📚 Помощь по использованию бота</b>
 
@@ -591,7 +573,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ========== ОБРАБОТЧИКИ КНОПОК ==========
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик нажатий на inline-кнопки"""
     query = update.callback_query
     await query.answer()
 
@@ -773,9 +754,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
-# ========== ОБРАБОТЧИКИ СООБЩЕНИЙ ==========
 async def handle_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик ввода суммы"""
     try:
         amount = float(update.message.text.replace(',', '.'))
         if amount <= 0:
@@ -801,7 +780,6 @@ async def handle_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_years(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик ввода срока"""
     try:
         years = float(update.message.text.replace(',', '.'))
         if years <= 0 or years > 50:
@@ -821,14 +799,12 @@ async def handle_years(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик ввода ставки и расчет"""
     try:
         rate = float(update.message.text.replace(',', '.'))
         if rate <= 0 or rate > 100:
             await update.message.reply_text("Ставка должна быть от 0.1 до 100%")
             return RATE
 
-        # Получаем все данные
         data = context.user_data
         calc_type = data.get('calc_type')
         amount = data.get('amount')
@@ -845,7 +821,6 @@ async def handle_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await show_main_menu(update, context)
                 return ConversationHandler.END
 
-            # Сохраняем в историю
             user_id = update.effective_user.id
             if user_id in calculation_history:
                 record = CalculationRecord(
@@ -855,7 +830,6 @@ async def handle_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 calculation_history[user_id].append(record)
 
-            # Формируем ответ
             if loan_type == "annuity":
                 response = f"""
                 ✅ <b>Результаты расчета аннуитетного кредита:</b>
@@ -911,7 +885,6 @@ async def handle_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await show_main_menu(update, context)
                 return ConversationHandler.END
 
-            # Сохраняем в историю
             user_id = update.effective_user.id
             if user_id in calculation_history:
                 record = CalculationRecord(
@@ -921,7 +894,6 @@ async def handle_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 calculation_history[user_id].append(record)
 
-            # Формируем ответ
             cap_names = {
                 'monthly': 'ежемесячной',
                 'quarterly': 'ежеквартальной',

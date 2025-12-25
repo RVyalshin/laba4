@@ -40,7 +40,7 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 if not BOT_TOKEN:
-    BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+    BOT_TOKEN = "8597735680:AAFfoHkk5CVHGMSprux0ZJ9JRW84fToyUbo"
 
 user_settings = {}
 calculation_history = {}
